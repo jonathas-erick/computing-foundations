@@ -1,19 +1,45 @@
-from lexer import tokenize
+from parser import parse_expression
+from evaluator import eval_ast
 
 variables = {}
 
+def evaluate_condition(line):
+    a = variables.get(line[1], 0)
+    op = line[2]
+    b = int(line[3])
+
+    if op == "<":
+        return a < b
+    if op == ">":
+        return a > b
+    if op == "==":
+        return a == b
+    return False
+
 def run(tokens):
-    for line in tokens:
+    i = 0
+
+    while i < len(tokens):
+        line = tokens[i]
+
         if line[0] == "let":
             var = line[1]
-            value = int(line[3])
+            expr_tokens = line[3:]
+            ast = parse_expression(expr_tokens)
+            value = eval_ast(ast, variables)
             variables[var] = value
 
         elif line[0] == "print":
-            var = line[1]
-            print(variables.get(var, 0))
+            ast = parse_expression(line[1:])
+            value = eval_ast(ast, variables)
+            print(value)
 
-if __name__ == "__main__":
-    code = open("examples/hello.wy").read()
-    tokens = tokenize(code)
-    run(tokens)
+        elif line[0] == "while":
+            if evaluate_condition(line):
+                i += 1
+                continue
+            else:
+                i += 2
+                continue
+
+        i += 1
